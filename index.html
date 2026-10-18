@@ -1,0 +1,1170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pedro Xavier Ramos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Pedro Xavier Ramos, PhD. Expert CFD engineer in Antwerp: marine, offshore, scour and river hydraulics, VR flow visualisation and surrogate models.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Martian+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one screen of open water. Text holds the edges, the middle is a character-grid flow field
+   where every glyph is a mesh cell and the cursor is a cylinder shedding a von Karman street. */
+:root {
+  --bg: #e9eeed;      /* still water */
+  --ink: #122221;     /* text and solid glyphs */
+  --muted: #546866;   /* secondary text */
+  --field: #9aaeab;   /* the flow field glyphs */
+  --accent: #0b6a82;  /* ripples, links, focus */
+  --rule: #c3cfcd;    /* hairlines */
+  --pool: #dbe3e1;    /* blob windows */
+  --font-display: "Martian Mono", "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --font-body: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --step--1: 12px; --step-0: 14px; --step-1: 16px; --step-2: 20px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #091214; --ink: #dbe6e4; --muted: #8da29f; --field: #2c4447; --accent: #55c3d6; --rule: #1f3438; --pool: #0f1d20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #091214; --ink: #dbe6e4; --muted: #8da29f; --field: #2c4447; --accent: #55c3d6; --rule: #1f3438; --pool: #0f1d20;
+  color-scheme: dark;
+}
+
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: var(--step-0); line-height: 1.6;
+  overflow-x: hidden;
+}
+#water {
+  position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0;
+  touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.frame {
+  position: relative; z-index: 1; box-sizing: border-box; min-height: 100%;
+  display: grid; grid-template-rows: auto auto minmax(42vh, 1fr) auto; gap: 18px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 22px;
+  pointer-events: none;
+}
+.solid { pointer-events: auto; }
+a, button { color: inherit; font: inherit; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 24px; }
+.name {
+  margin: 0; font-family: var(--font-display); font-weight: 600; font-size: var(--step-1);
+  letter-spacing: 0.01em; line-height: 1.3;
+}
+.role {
+  margin: 4px 0 0; font-family: var(--font-display); font-size: var(--step--1);
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+}
+.nav { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: var(--step-0); }
+.nav a, .nav button { color: var(--ink); }
+.nav a:hover, .nav button:hover { color: var(--accent); text-decoration: none; }
+#sound { color: var(--muted); }
+
+.open-water { position: relative; min-width: 0; }
+.banner { min-width: 0; height: 120px; }
+.stats span { white-space: nowrap; }
+.hint, .readout {
+  position: absolute; left: 0; right: 0; margin: 0; font-size: var(--step--1); color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.hint { top: 0; }
+.readout { bottom: 0; }
+.hint .touch { display: none; }
+@media (hover: none) { .hint .fine { display: none; } .hint .touch { display: inline; } }
+
+.bottom { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px 56px; align-items: end; }
+.label {
+  margin: 0 0 8px; font-family: var(--font-display); font-weight: 400; font-size: var(--step--1);
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted);
+}
+.bio { min-width: 0; max-width: 62ch; }
+.bio p { margin: 0 0 10px; }
+.bio .stats { margin: 0; color: var(--muted); font-size: var(--step--1); font-variant-numeric: tabular-nums; }
+.works { min-width: 0; justify-self: end; width: min(100%, 44ch); }
+.works ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.works li { border-bottom: 1px solid var(--rule); }
+.works button {
+  width: 100%; display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; text-align: left;
+}
+.works button .f { color: var(--muted); font-size: var(--step--1); }
+.works button:hover .t { color: var(--accent); }
+
+#hold {
+  position: fixed; z-index: 3; left: 0; top: 0; pointer-events: none; margin: 0;
+  padding: 2px 6px; font-size: var(--step--1); color: var(--bg); background: var(--ink);
+  white-space: pre; font-variant-numeric: tabular-nums;
+}
+
+.scrim {
+  position: fixed; inset: 0; z-index: 5; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-bottom, 0px));
+}
+.panel {
+  box-sizing: border-box; width: min(100%, 760px); max-height: 100%; overflow: auto;
+  background: var(--bg); border: 1px solid var(--ink); padding: 18px 20px 22px;
+}
+.panel-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: start; margin-bottom: 14px; }
+.panel-head .label { grid-column: 1; margin: 0; }
+.panel-head h2 {
+  grid-column: 1; margin: 0; font-family: var(--font-display); font-weight: 600; font-size: var(--step-2);
+  line-height: 1.25; text-wrap: balance;
+}
+.panel-head .close { grid-column: 2; grid-row: 1 / span 2; color: var(--muted); }
+.panel-head .close:hover { color: var(--accent); }
+.clip { margin: 0 0 14px; border: 1px dashed var(--rule); }
+.clip canvas, .clip video { display: block; width: 100%; max-width: 100%; aspect-ratio: 12 / 5; }
+.panel p { margin: 0 0 10px; max-width: 66ch; }
+.meta { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; margin: 12px 0 0; font-size: var(--step--1); }
+.meta dt { color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--font-display); }
+.meta dd { margin: 0; }
+.cv section { margin-bottom: 18px; }
+.cv section:last-child { margin-bottom: 0; }
+.rows { display: grid; grid-template-columns: 10ch minmax(0, 1fr); gap: 8px 16px; margin: 0; }
+.rows dt { color: var(--muted); font-variant-numeric: tabular-nums; }
+.rows dd { margin: 0; }
+.rows dd span { color: var(--muted); }
+.email-row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; }
+.email-row code { font: inherit; font-size: var(--step-1); user-select: all; overflow-wrap: anywhere; }
+.copy { color: var(--accent); }
+
+@media (max-width: 820px) {
+  .bottom { grid-template-columns: minmax(0, 1fr); }
+  .works { justify-self: stretch; width: 100%; }
+  .frame { grid-template-rows: auto auto minmax(46vh, 1fr) auto; }
+}
+@media (max-width: 480px) {
+  .rows { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .rows dd { margin-bottom: 8px; }
+}
+</style>
+</head>
+<body>
+<canvas id="water" aria-hidden="true"></canvas>
+
+<div class="frame">
+  <header class="top">
+    <div class="solid">
+      <h1 class="name">Pedro Xavier Ramos, PhD</h1>
+      <p class="role">Expert CFD engineer · Antwerp, Belgium</p>
+    </div>
+    <nav class="solid nav" aria-label="Main">
+      <a href="#works">[works]</a>
+      <button type="button" data-open="cv">[cv]</button>
+      <button type="button" data-open="contact">[contact]</button>
+      <button type="button" id="sound" aria-pressed="true">[sound on]</button>
+    </nav>
+  </header>
+
+  <div class="banner" id="banner" aria-hidden="true"></div>
+
+  <div class="open-water" id="ow" aria-hidden="true">
+    <p class="hint mask"><span class="fine">move to shed a wake · click to drop a stone · hold a bubble to open</span><span class="touch">drag to shed a wake · tap to drop a stone · hold a bubble to open</span></p>
+    <p class="readout mask" id="readout">St 0.20 · U 0 px/s · f 0.0 Hz · vortices 0</p>
+  </div>
+
+  <footer class="bottom">
+    <section class="solid bio" aria-labelledby="about-h">
+      <h2 class="label" id="about-h">about</h2>
+      <p>I simulate water and wind around ships, offshore structures, bridges and rivers. I have worked in hydraulics and CFD since 2012, from bridge pier scour in Porto to wave and wind loading on offshore vessels, run on HPC clusters with thousands of cores.</p>
+      <p>I also build VR flow worlds that let clients walk through the results, and surrogate models that turn days of simulation into seconds.</p>
+      <p class="stats"><span>PhD, Ghent University</span> · <span>9 journal articles</span> · <span>23 conference papers</span> · <span>h-index 7</span></p>
+    </section>
+    <section class="solid works" id="works" aria-labelledby="works-h">
+      <h2 class="label" id="works-h">selected works</h2>
+      <ul>
+        <li><button type="button" data-work="scour"><span class="t">bridge pier scour</span><span class="f">river engineering</span></button></li>
+        <li><button type="button" data-work="river"><span class="t">river hydraulics</span><span class="f">locks · confluences</span></button></li>
+        <li><button type="button" data-work="waves"><span class="t">waves on structures</span><span class="f">multiphase CFD</span></button></li>
+        <li><button type="button" data-work="wind"><span class="t">wind over decks</span><span class="f">offshore vessels</span></button></li>
+        <li><button type="button" data-work="vr"><span class="t">VR flow worlds</span><span class="f">visualisation</span></button></li>
+        <li><button type="button" data-work="surr"><span class="t">surrogate models</span><span class="f">machine learning</span></button></li>
+      </ul>
+    </section>
+  </footer>
+</div>
+
+<p id="hold" hidden></p>
+
+<div class="scrim" id="scrim" hidden>
+  <section class="panel solid" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" tabindex="-1">
+    <header class="panel-head">
+      <p class="label" id="panel-kicker"></p>
+      <h2 id="panel-title"></h2>
+      <button type="button" class="close" id="close">[close]</button>
+    </header>
+    <div id="panel-body"></div>
+  </section>
+</div>
+
+<template id="tpl-cv">
+  <div class="cv">
+    <section>
+      <h3 class="label">experience</h3>
+      <dl class="rows">
+        <dt>2025–now</dt><dd><b>Expert CFD Engineer</b> · dredging and offshore contractor · Zwijndrecht, BE<br><span>Wind, wave and multiphase CFD for offshore vessels and marine structures, surrogate models and HPC.</span></dd>
+        <dt>2025–now</dt><dd><b>Virtual Reality &amp; Technical Marketing</b> · same company<br><span>Immersive flow visualisation and visual material for business development.</span></dd>
+        <dt>2022–2025</dt><dd><b>CFD Engineer</b> · same company</dd>
+        <dt>2015–2022</dt><dd><b>Teaching Assistant &amp; Doctoral Researcher</b> · Ghent University<br><span>Four courses to 200+ students a year, 11 master's theses supervised.</span></dd>
+        <dt>2015</dt><dd><b>Civil Engineer &amp; Researcher</b> · Flanders Hydraulics Research · Antwerp</dd>
+        <dt>2012–2015</dt><dd><b>Research Fellow</b> · University of Porto</dd>
+      </dl>
+    </section>
+    <section>
+      <h3 class="label">education</h3>
+      <dl class="rows">
+        <dt>2016–2022</dt><dd><b>PhD in Engineering, CFD</b> · Ghent University</dd>
+        <dt>2007–2012</dt><dd><b>Integrated Master in Civil Engineering</b> · University of Porto</dd>
+        <dt>2022–now</dt><dd><b>Professional Education for Dredging</b> · Vereniging van Waterbouwers</dd>
+      </dl>
+    </section>
+    <section>
+      <h3 class="label">tools</h3>
+      <p>STAR-CCM+ · OpenFOAM · Ansys Fluent · SSIIM · Python · MATLAB · Java · C++ · Bash · Slurm on Tier-1 HPC · Gaussian-process regression · VR flow visualisation · HEC-RAS</p>
+    </section>
+    <section>
+      <h3 class="label">publications</h3>
+      <p>9 journal articles · 23 conference papers · h-index 7 · <a href="https://scholar.google.com/citations?user=rQWce5UAAAAJ&amp;hl=en" target="_blank" rel="noopener">Google Scholar</a></p>
+    </section>
+    <section>
+      <h3 class="label">languages</h3>
+      <p>Portuguese native · English C1 · Spanish intermediate · Dutch A2</p>
+    </section>
+    <section>
+      <h3 class="label">memberships</h3>
+      <p>Ordem dos Engenheiros · IAHR</p>
+    </section>
+  </div>
+</template>
+
+<template id="tpl-contact">
+  <div>
+    <h3 class="label">email</h3>
+    <p class="email-row"><code id="email">pedro.xavier.ramos@gmail.com</code><button type="button" class="copy" id="copy">[copy]</button></p>
+    <p><a href="mailto:pedro.xavier.ramos@gmail.com">write an email</a></p>
+    <h3 class="label">publications</h3>
+    <p><a href="https://scholar.google.com/citations?user=rQWce5UAAAAJ&amp;hl=en" target="_blank" rel="noopener">Google Scholar</a></p>
+    <h3 class="label">based in</h3>
+    <p>Antwerp, Belgium · Portuguese, English, Spanish, Dutch</p>
+  </div>
+</template>
+
+<script>
+(() => {
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const canvas = $("#water");
+const ctx = canvas.getContext("2d", { alpha: false });
+const ow = $("#ow");
+const banner = $("#banner");
+const readout = $("#readout");
+const holdEl = $("#hold");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const FONT = '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+
+/* ---------- physics constants ---------- */
+const ST = 0.2;          // Strouhal number of a circular cylinder
+const D = 26;            // body diameter in px
+const SIG0 = (0.8 * D) ** 2;
+const NU = ((2.2 * D) ** 2 - SIG0) / 12;   // core spreads to 2.2 D in 3 s
+const MAXV = 170;
+
+/* ---------- the works ---------- */
+// To show real footage, put a video path in `video` (e.g. "clips/scour.mp4").
+// Until then the case opens with the live ASCII version of the clip.
+const WORKS = {
+  scour: { label: "pier scour", title: "Bridge pier scour", field: "river engineering",
+    text: "Physical and numerical modelling of scour around bridge piers at the University of Porto, with external consultancy on bridge scour in the Douro River. Followed by ADV velocity measurements on physical models at Flanders Hydraulics Research and research on bridge pier scour at Ghent University.",
+    tools: "physical models · ADV measurements · CFD · field consultancy", video: "" },
+  river: { label: "river hydraulics", title: "River hydraulics", field: "locks · confluences · embankments",
+    text: "Applied research on navigation locks, river confluences and bridge piers at Ghent University. Consulting on sustainable river embankment methods within the Bankbusters public-private consortium of contractors and universities.",
+    tools: "OpenFOAM · SSIIM · HEC-RAS · Locksim · Lockfill", video: "" },
+  waves: { label: "waves on structures", title: "Waves on structures", field: "multiphase CFD",
+    text: "Multiphase wave simulations for vessel motion and wave–structure interaction, with wind and hydrodynamic loading studies on marine structures and vessels. Run on HPC clusters with parallel scaling up to thousands of cores.",
+    tools: "STAR-CCM+ · RANS and DDES · Slurm on HPC", video: "" },
+  wind: { label: "wind over decks", title: "Wind over decks", field: "offshore vessels",
+    text: "A safety-critical CFD assessment that certified helicopter landings for medical evacuations on offshore wind installation vessels, with regulatory certification and sign-off by several stakeholders.",
+    tools: "STAR-CCM+ · SST k–ω · DDES", video: "" },
+  vr: { label: "VR flow worlds", title: "VR flow worlds", field: "visualisation",
+    text: "Immersive VR visualisations for a port of the future initiative, used for stakeholder engagement and design review. Real-time 3-D flow environments that show CFD results to clients and to people outside engineering.",
+    tools: "VR flow visualisation · Adobe Illustrator · Final Cut Pro · Agisoft", video: "" },
+  surr: { label: "surrogate models", title: "Surrogate models", field: "machine learning for fluids",
+    text: "Surrogate models that replace expensive CFD runs in parametric design-space exploration, and machine-learning tools that predict wave transformation in seconds instead of days.",
+    tools: "Python · Gaussian-process regression · design of experiments", video: "" },
+};
+const ORDER = ["scour", "river", "waves", "wind", "vr", "surr"];
+
+/* ---------- ASCII helpers ---------- */
+const RAMP = " .:-=+*#%@";
+const POS = " .:-=+*#%@";
+const NEG = " .,-~=oO0@";
+const frac = x => x - Math.floor(x);
+const rc = (I, ramp = RAMP) => ramp[Math.max(0, Math.min(ramp.length - 1, (I * ramp.length) | 0))];
+
+/* ---------- clip patterns: f(u, v, t, du, dv) -> char, in blob units (radius 1) ---------- */
+const PAT = {};
+PAT.scour = (u, v, t, du, dv) => {
+  const a = 0.17, x = u + 0.12, y = v, r2 = x * x + y * y, r = Math.sqrt(r2);
+  if (r < a) return r < a - 0.07 ? "@" : "#";
+  const d = Math.max(0, 1 - (r - a) / 0.42) * (x < 0 ? 1 : 0.7);
+  if (d > 0.06 && frac(d * 3.2) < 0.15) return d > 0.6 ? "=" : "-";
+  if (x > a && Math.abs(y) < 0.2 + x * 0.12) {
+    const w = Math.sin(x * 13 - t * 5) * (y >= 0 ? 1 : -1);
+    if (w > 0.78) return "o";
+  }
+  const psi = y * (1 - (a * a) / Math.max(r2, 1e-4));
+  const s = frac(psi * 6.5 + 0.5);
+  if (Math.abs(s - 0.5) < 0.05 + dv * 1.4) {
+    const m = frac(x * 2.2 - t * 0.55 + psi * 3);
+    if (m < 0.55) return "-";
+  }
+  return " ";
+};
+PAT.river = (u, v, t, du, dv) => {
+  const yc = 0.18 * Math.sin(u * 2.1 + 0.6) + 0.1;
+  const jx = -0.05, jy = 0.18 * Math.sin(jx * 2.1 + 0.6) + 0.1;
+  const half = u < jx ? 0.15 : 0.15 + Math.min(0.11, (u - jx) * 0.25);
+  const dm = Math.abs(v - yc);
+  const tx0 = -1.0, ty0 = -0.95, vx = jx - tx0, vy = jy - ty0, L2 = vx * vx + vy * vy;
+  let tt = ((u - tx0) * vx + (v - ty0) * vy) / L2; tt = Math.max(0, Math.min(1, tt));
+  const dtb = Math.hypot(u - (tx0 + vx * tt), v - (ty0 + vy * tt)), th = 0.1;
+  const inMain = dm < half, inTrib = dtb < th;
+  if (inMain || inTrib) {
+    if (inMain && u > jx && u < jx + 0.85 && Math.abs(v - (yc - half * 0.2)) < 0.025 + dv * 0.6) {
+      return frac(u * 3 - t * 0.8) < 0.5 ? "*" : "+";
+    }
+    const along = inMain ? u + (v - yc) * 1.2 : tt * 1.6 - 1.6;
+    const m = frac(along * 4 - t * 0.7);
+    return m < 0.16 ? "~" : (m < 0.28 ? "-" : " ");
+  }
+  if ((dm < half + dv * 1.1) || (dtb < th + dv * 1.2)) return "=";
+  const n = Math.sin(u * 31 + Math.sin(v * 17) * 2) * Math.sin(v * 23 + u * 5);
+  return n > 0.9 ? "," : " ";
+};
+PAT.waves = (u, v, t, du, dv) => {
+  const ph = 5 * u - 2.6 * t;
+  const eta = 0.11 * Math.sin(ph) + 0.045 * Math.sin(9.3 * u - 3.9 * t + 1.3) - 0.05;
+  if (u > 0.22 && u < 0.36 && v > -0.8) return (u < 0.22 + du * 1.1 || u > 0.36 - du * 1.1) ? "|" : "#";
+  const c = Math.max(0, Math.sin(5 * 0.22 - 2.6 * t));
+  if (c > 0.5 && u > 0.08 && u < 0.22 && v < eta && v > eta - (c - 0.5) * 0.9) {
+    const h = Math.sin(u * 97 + v * 61 + t * 23);
+    if (h > 0.55) return h > 0.9 ? "*" : ".";
+  }
+  if (Math.abs(v - eta) < dv * 0.6) return Math.sin(ph) > 0.65 ? "^" : "~";
+  if (v > eta) {
+    const depth = v - eta;
+    const orb = Math.sin(ph + depth * 4) * Math.exp(-depth * 1.4);
+    const I = 0.12 + 0.2 * (orb * 0.5 + 0.5);
+    return rc(I);
+  }
+  return " ";
+};
+PAT.wind = (u, v, t, du, dv) => {
+  const deck = 0.35;
+  if (v > deck && v < 0.68 && u > -0.9 + (v - deck) * 0.7 && u < 0.85) return v < deck + dv * 1.05 ? "=" : "#";
+  if (u > -0.35 && u < -0.05 && v > -0.12 && v <= deck) return (frac(v * 7) < 0.25 && u > -0.3 && u < -0.1) ? ":" : "#";
+  if (u > 0.2 && u < 0.66 && Math.abs(v - 0.12) < dv * 0.55) return "=";
+  if (Math.abs(u - 0.43) < du * 1.6 && v < 0.12 - dv * 0.4 && v > 0.12 - dv * 1.6) return "H";
+  if ((Math.abs(u - 0.24) < du * 0.6 || Math.abs(u - 0.62) < du * 0.6) && v > 0.12 && v < deck) return "|";
+  const rx = u - 0.07, ry = v + 0.02, rr = Math.hypot(rx, ry / 0.8);
+  if (rr < 0.16 && v < 0.12) {
+    const m = frac(Math.atan2(ry, rx) / (Math.PI * 2) * 3 + t * 0.9 + rr * 4);
+    return m < 0.3 ? "o" : " ";
+  }
+  if (v < deck) {
+    const bump = 0.3 * Math.exp(-(((u + 0.2) / 0.35) ** 2));
+    const ys = v + bump * Math.exp(-Math.max(0, deck - v) * 2.2);
+    if (Math.abs(frac(ys * 6) - 0.5) < 0.06 + dv * 1.6) {
+      if (frac(u * 2.4 - t * 0.9 + ys) < 0.6) return "-";
+    }
+  }
+  return " ";
+};
+PAT.surr = (u, v, t, du, dv) => {
+  const f = x => 0.32 * Math.sin(2.7 * x) + 0.12 * x;
+  const XS = [-0.75, 0.6, -0.1, 0.3, -0.45, 0.8, 0.05, -0.9, 0.45, -0.28];
+  const n = 2 + Math.floor((t * 0.6) % 9);
+  if (Math.abs(v - 0.62) < dv * 0.55 && Math.abs(u) < 0.9) return "-";
+  if (Math.abs(u + 0.9) < du * 0.6 && v > -0.62 && v < 0.62) return "|";
+  if (Math.abs(u) > 0.88 || v > 0.6 || v < -0.66) return " ";
+  let k = 1;
+  for (let i = 0; i < n; i++) k *= 1 - Math.exp(-(((u - XS[i]) / 0.22) ** 2));
+  const sig = 0.035 + 0.36 * k;
+  const m = -f(u) * (1 - k * 0.85);
+  for (let i = 0; i < n; i++) if (Math.abs(u - XS[i]) < du * 0.7 && Math.abs(v + f(XS[i])) < dv * 0.7) return "O";
+  if (Math.abs(v - m) < dv * 0.55) return "*";
+  if (Math.abs(v - m) < sig) return k > 0.5 ? ":" : ".";
+  return " ";
+};
+// VR is a point cloud: a rotating wireframe room with streamlines running through it.
+PAT.vr = { points(t) {
+  const pts = [], s = 0.55, ay = t * 0.5, ax = 0.45;
+  const cy = Math.cos(ay), sy = Math.sin(ay), cx = Math.cos(ax), sx = Math.sin(ax);
+  const push = (x, y, z, c) => {
+    const x1 = x * cy + z * sy, z1 = -x * sy + z * cy;
+    const y1 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;
+    const p = 1 / (1.9 - z2 * 0.6);
+    pts.push([x1 * p * 1.25, y1 * p * 1.25, z2, c]);
+  };
+  const V = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+  const E = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  for (const [a, b] of E) for (let i = 0; i <= 14; i++) {
+    const q = i / 14;
+    push(s * (V[a][0] + (V[b][0] - V[a][0]) * q), s * (V[a][1] + (V[b][1] - V[a][1]) * q), s * (V[a][2] + (V[b][2] - V[a][2]) * q), null);
+  }
+  for (let k = 0; k < 3; k++) for (let i = 0; i <= 34; i++) {
+    const x = -s + (2 * s * i) / 34;
+    if (frac(i / 34 * 3 - t * 0.8 + k * 0.3) > 0.7) continue;
+    push(x, 0.22 * Math.sin(x * 4 + k * 2 + t * 1.5) + (k - 1) * 0.2, 0.22 * Math.cos(x * 3 + k), "~");
+  }
+  return pts;
+} };
+
+/* ---------- 5x7 bitmap font for the name that surfaces in the wake ---------- */
+const GLYPH = {
+  A: [".###.","#...#","#...#","#####","#...#","#...#","#...#"],
+  D: ["####.","#...#","#...#","#...#","#...#","#...#","####."],
+  E: ["#####","#....","#....","####.","#....","#....","#####"],
+  I: [".###.","..#..","..#..","..#..","..#..","..#..",".###."],
+  M: ["#...#","##.##","#.#.#","#.#.#","#...#","#...#","#...#"],
+  O: [".###.","#...#","#...#","#...#","#...#","#...#",".###."],
+  P: ["####.","#...#","#...#","####.","#....","#....","#...."],
+  R: ["####.","#...#","#...#","####.","#.#..","#..#.","#...#"],
+  S: [".####","#....","#....",".###.","....#","....#","####."],
+  V: ["#...#","#...#","#...#","#...#","#...#",".#.#.","..#.."],
+  X: ["#...#","#...#",".#.#.","..#..",".#.#.","#...#","#...#"],
+};
+function buildName(lines, sx, sy) {
+  const gw = 5, gh = 7, gap = 1, lineGap = 2;
+  const lw = lines.map(s => s.length * (gw + gap) - gap);
+  const maxw = Math.max(...lw);
+  const w = maxw * sx, h = (lines.length * gh + (lines.length - 1) * lineGap) * sy;
+  const m = new Uint8Array(w * h);
+  lines.forEach((s, li) => {
+    const off = Math.floor((maxw - lw[li]) / 2), y0 = li * (gh + lineGap);
+    [...s].forEach((c, ci) => {
+      const g = GLYPH[c]; if (!g) return;
+      for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+        if (g[gy][gx] !== "#") continue;
+        for (let a = 0; a < sy; a++) for (let b = 0; b < sx; b++) {
+          m[((y0 + gy) * sy + a) * w + (off + ci * (gw + gap) + gx) * sx + b] = 1;
+        }
+      }
+    });
+  });
+  return { w, h, m };
+}
+
+/* ---------- state ---------- */
+let W = 0, H = 0, dpr = 1, fs = 13, cw = 8, ch = 15, cols = 0, rows = 0;
+let omega, ripA, gChar, gLayer, maskG, rowBuf;
+let NAME = null, owRect = { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 }, bnRect = { left: 0, top: 0 };
+let maskRects = [];
+const colors = {};
+const vortices = [];
+const ripples = [];
+const blobs = [];
+let T = 0, lastScroll = scrollY;
+let soundOn = true;
+try { soundOn = localStorage.getItem("pxr-sound") !== "off"; } catch (e) {}
+
+const makeBody = () => ({ x: 0, y: 0, tx: 0, ty: 0, vx: 0, vy: 0, phase: 0, side: 1, has: false });
+const mouse = makeBody();
+const ghost = Object.assign(makeBody(), { run: false, s: 0, dur: 1, y0: 0, amp: 0, x0: 0, x1: 0 });
+let mouseType = "mouse", lastMove = -1e9, hover = -1;
+let hold = null; // { blob, start }
+let panelOpen = false;
+
+function readColors() {
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ["bg", "ink", "field", "accent", "muted", "pool"]) colors[k] = cs.getPropertyValue("--" + k).trim() || "#000";
+}
+
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+  fs = Math.max(11, Math.min(15, W / 105));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.font = `${fs}px ${FONT}`;
+  ctx.textBaseline = "top";
+  cw = ctx.measureText("MMMMMMMMMM").width / 10;
+  ch = Math.round(fs * 1.2);
+  cols = Math.ceil(W / cw) + 1; rows = Math.ceil(H / ch) + 1;
+  const n = cols * rows;
+  omega = new Float32Array(n); ripA = new Float32Array(n);
+  gChar = new Uint16Array(n); gLayer = new Uint8Array(n); maskG = new Uint8Array(n);
+  rowBuf = [1, 2, 3, 4].map(() => new Uint16Array(cols));
+  layoutName();
+  updateRects();
+  layoutBlobs();
+}
+
+function updateRects() {
+  const br = banner.getBoundingClientRect();
+  bnRect = { left: br.left, top: br.top };
+  const r = ow.getBoundingClientRect();
+  owRect = { left: r.left, top: r.top + 26, right: r.right, bottom: r.bottom - 26, width: r.width, height: Math.max(0, r.height - 52) };
+  maskRects = [];
+  document.querySelectorAll(".solid, .mask").forEach(el => {
+    if (el.closest("[hidden]")) return;
+    for (const rr of el.getClientRects()) if (rr.width && rr.height) maskRects.push(rr);
+  });
+}
+
+function layoutName() {
+  const avail = Math.floor(banner.getBoundingClientRect().width / cw) - 1;
+  const opts = [
+    [["PEDRO XAVIER RAMOS"], 2, 1],
+    [["PEDRO XAVIER", "RAMOS"], 2, 1],
+    [["PEDRO", "XAVIER", "RAMOS"], 2, 1],
+    [["PEDRO", "XAVIER", "RAMOS"], 1, 1],
+  ];
+  NAME = null;
+  for (const o of opts) { const b = buildName(...o); if (b.w <= avail) { NAME = b; break; } }
+  if (!NAME) NAME = buildName(...opts[3]);
+  banner.style.height = NAME.h * ch + "px";
+}
+
+function blobR() {
+  const k = owRect.width < 600 ? 0.3 : 0.34;
+  return Math.max(32, Math.min(112, Math.sqrt(Math.max(1, owRect.width * owRect.height) / 6) * k));
+}
+function layoutBlobs() {
+  const R0 = blobR();
+  if (!blobs.length) {
+    const spots = [[0.12, 0.3], [0.38, 0.72], [0.6, 0.25], [0.86, 0.62], [0.2, 0.82], [0.72, 0.88]];
+    ORDER.forEach((id, k) => {
+      blobs.push({
+        id, k, x: owRect.left + owRect.width * spots[k][0], y: owRect.top + owRect.height * spots[k][1],
+        vx: 0, vy: 0, R0, scale: 1,
+        ph: [Math.random() * 6.3, Math.random() * 6.3, Math.random() * 6.3], t0: Math.random() * 20,
+      });
+    });
+  }
+  for (const b of blobs) { b.R0 = R0; confine(b, 0, true); }
+}
+
+/* ---------- vortices ---------- */
+function addVortex(x, y, G) {
+  vortices.push({ x, y, G0: G, G, age: 0, s2: SIG0 });
+  if (vortices.length > MAXV) vortices.shift();
+}
+function shed(b, dt) {
+  const sp = Math.hypot(b.vx, b.vy);
+  if (sp < 70) { b.phase = Math.max(0, b.phase - dt); return; }
+  const U = Math.min(sp, 2200);
+  b.phase += 2 * ST * U / D * dt;
+  while (b.phase >= 1) {
+    b.phase -= 1; b.side = -b.side;
+    const ux = b.vx / sp, uy = b.vy / sp, nx = -uy, ny = ux;
+    const qx = b.x - ux * 0.7 * D + nx * b.side * 0.32 * D;
+    const qy = b.y - uy * 0.7 * D + ny * b.side * 0.32 * D;
+    // pick the sign so the street drags fluid along with the body, as a real wake does
+    const dx = -nx * b.side, dy = -ny * b.side;
+    const sgn = Math.sign(-dy * ux + dx * uy) || 1;
+    addVortex(qx, qy, sgn * 2.2 * U * D);
+  }
+}
+function induced(x, y, skip, minS2) {
+  let u = 0, v = 0;
+  for (let j = 0; j < vortices.length; j++) {
+    if (j === skip) continue;
+    const q = vortices[j], dx = x - q.x, dy = y - q.y, r2 = dx * dx + dy * dy + 1e-3;
+    const s2 = Math.max(q.s2, minS2);
+    const k = q.G / (2 * Math.PI * r2) * (1 - Math.exp(-r2 / s2));
+    u -= k * dy; v += k * dx;
+  }
+  return [u, v];
+}
+function stepVortices(dt) {
+  for (const q of vortices) { q.age += dt; q.s2 = SIG0 + 4 * NU * q.age; q.G = q.G0 * Math.exp(-q.age / 2.6); }
+  const vel = vortices.map((q, i) => induced(q.x, q.y, i, 0));
+  vortices.forEach((q, i) => { q.x += vel[i][0] * dt * 0.9; q.y += vel[i][1] * dt * 0.9; });
+  while (vortices.length && vortices[0].age > 6.5) vortices.shift();
+}
+
+/* ---------- bodies ---------- */
+function stepBody(b, dt) {
+  if (!b.has) { b.vx *= 0.8; b.vy *= 0.8; return; }
+  const ivx = (b.tx - b.x) / dt, ivy = (b.ty - b.y) / dt;
+  const k = 1 - Math.exp(-dt * 14);
+  b.vx += (ivx - b.vx) * k; b.vy += (ivy - b.vy) * k;
+  b.x = b.tx; b.y = b.ty;
+  shed(b, dt);
+}
+function launchGhost() {
+  if (owRect.width < 50) return;
+  ghost.run = true; ghost.s = 0;
+  const dir = Math.random() < 0.5 ? 1 : -1;
+  ghost.x0 = dir > 0 ? owRect.left - 80 : owRect.right + 80;
+  ghost.x1 = dir > 0 ? owRect.right + 80 : owRect.left - 80;
+  ghost.dur = Math.abs(ghost.x1 - ghost.x0) / 620;
+  ghost.y0 = owRect.top + owRect.height * (0.4 + Math.random() * 0.2);
+  ghost.amp = owRect.height * 0.12;
+  ghost.has = false;
+}
+function stepGhost(dt) {
+  if (!ghost.run) { ghost.has = false; return; }
+  ghost.s += dt / ghost.dur;
+  if (ghost.s >= 1) { ghost.run = false; ghost.has = false; return; }
+  const x = ghost.x0 + (ghost.x1 - ghost.x0) * ghost.s;
+  const y = ghost.y0 + ghost.amp * Math.sin(ghost.s * Math.PI * 2);
+  if (!ghost.has) { ghost.x = ghost.tx = x; ghost.y = ghost.ty = y; ghost.has = true; return; }
+  ghost.tx = x; ghost.ty = y;
+}
+
+/* ---------- ripples and sound ---------- */
+let AC = null, master = null, noise = null;
+function audio() {
+  if (AC) return AC;
+  try {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    master = AC.createGain(); master.gain.value = 0.55; master.connect(AC.destination);
+    noise = AC.createBuffer(1, AC.sampleRate * 0.1, AC.sampleRate);
+    const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  } catch (e) { AC = null; }
+  return AC;
+}
+function bloop(f0, rise, decay, gain, when = 0) {
+  const ac = audio(); if (!ac || !soundOn) return;
+  if (ac.state === "suspended") ac.resume();
+  const t = ac.currentTime + when;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f0 * rise, t + decay * 0.45);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + 0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + decay + 0.05);
+  const src = ac.createBufferSource(), bp = ac.createBiquadFilter(), g2 = ac.createGain();
+  src.buffer = noise; bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 0.9;
+  g2.gain.setValueAtTime(gain * 0.25, t); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+  src.connect(bp); bp.connect(g2); g2.connect(master); src.start(t); src.stop(t + 0.07);
+}
+const dropSound = () => bloop(360 + Math.random() * 280, 2.6, 0.16, 0.26);
+const openSound = () => { bloop(190, 2.3, 0.34, 0.3); bloop(520, 2.0, 0.18, 0.12, 0.09); };
+function addRipple(x, y, amp = 1) {
+  if (reduce) return;
+  ripples.push({ x, y, age: 0, amp });
+  if (ripples.length > 12) ripples.shift();
+}
+
+/* ---------- blobs ---------- */
+function blobRadius(b, th) {
+  const t = T + b.t0;
+  return b.R0 * b.scale * (1 + 0.1 * Math.sin(2 * th + b.ph[0] + 0.5 * t) + 0.07 * Math.sin(3 * th + b.ph[1] - 0.37 * t) + 0.04 * Math.sin(5 * th + b.ph[2] + 0.8 * t));
+}
+function blobAt(x, y) {
+  for (let i = blobs.length - 1; i >= 0; i--) {
+    const b = blobs[i], dx = x - b.x, dy = y - b.y;
+    if (Math.hypot(dx, dy) < blobRadius(b, Math.atan2(dy, dx))) return i;
+  }
+  return -1;
+}
+function confine(b, dt, hard) {
+  const m = b.R0 * 0.9;
+  const L = owRect.left + m, R = owRect.right - m, Tp = owRect.top + b.R0, B = owRect.bottom - b.R0 * 1.15 - ch;
+  const cx = (owRect.left + owRect.right) / 2, cy = (owRect.top + owRect.bottom) / 2;
+  if (hard) {
+    b.x = L < R ? Math.max(L, Math.min(R, b.x)) : cx;
+    b.y = Tp < B ? Math.max(Tp, Math.min(B, b.y)) : cy;
+    return;
+  }
+  let ax = 0, ay = 0;
+  if (L < R) { if (b.x < L) ax += (L - b.x) * 7; if (b.x > R) ax -= (b.x - R) * 7; } else ax += (cx - b.x) * 7;
+  if (Tp < B) { if (b.y < Tp) ay += (Tp - b.y) * 7; if (b.y > B) ay -= (b.y - B) * 7; } else ay += (cy - b.y) * 7;
+  b.vx += ax * dt; b.vy += ay * dt;
+}
+function stepBlobs(dt) {
+  const bodies = [mouse, ghost];
+  blobs.forEach((b, i) => {
+    const target = hold && hold.blob === i ? 1.12 : (hover === i ? 1.07 : 1);
+    b.scale += (target - b.scale) * Math.min(1, dt * 8);
+    const t = T + b.t0;
+    let ax = 14 * Math.sin(t * 0.13 + b.k * 1.7), ay = 10 * Math.cos(t * 0.11 + b.k * 2.3);
+    const [uw, vw] = induced(b.x, b.y, -1, (b.R0 * 0.5) ** 2);
+    ax += uw * 1.6; ay += vw * 1.6;
+    for (const bd of bodies) {
+      if (!bd.has) continue;
+      const sp = Math.hypot(bd.vx, bd.vy); if (sp < 120) continue;
+      const d = Math.hypot(b.x - bd.x, b.y - bd.y), reach = b.R0 * b.scale + 40;
+      if (d < reach) {
+        const f = 1 - d / reach, k = Math.min(1, dt * 5 * f);
+        b.vx += (bd.vx * 0.6 - b.vx) * k; b.vy += (bd.vy * 0.6 - b.vy) * k;
+      }
+    }
+    for (const r of ripples) {
+      const dx = b.x - r.x, dy = b.y - r.y, d = Math.hypot(dx, dy) + 1e-3;
+      if (Math.abs(d - r.age * 240) < 34) { const a = r.amp * 260 * dt * Math.exp(-r.age); b.vx += dx / d * a; b.vy += dy / d * a; }
+    }
+    for (let j = 0; j < blobs.length; j++) {
+      if (j === i) continue;
+      const o = blobs[j], dx = b.x - o.x, dy = b.y - o.y, d = Math.hypot(dx, dy) + 1e-3;
+      const ov = (b.R0 * b.scale + o.R0 * o.scale) * 1.1 - d;
+      if (ov > 0) { ax += dx / d * ov * 6; ay += dy / d * ov * 6; }
+    }
+    b.vx += ax * dt; b.vy += ay * dt;
+    const damp = Math.exp(-(hold && hold.blob === i ? 6 : 1.2) * dt);
+    b.vx *= damp; b.vy *= damp;
+    confine(b, dt, false);
+    const sp = Math.hypot(b.vx, b.vy); if (sp > 500) { b.vx *= 500 / sp; b.vy *= 500 / sp; }
+    b.x += b.vx * dt; b.y += b.vy * dt;
+  });
+}
+
+/* ---------- rendering ---------- */
+const L_NONE = 0, L_FIELD = 1, L_INK = 2, L_ACC = 3, L_MUTED = 4;
+function ambient(x, y, t) {
+  const a = Math.sin(x * 0.011 + t * 0.35 + Math.sin(y * 0.015 + t * 0.21) * 1.8)
+          + Math.sin(y * 0.019 - t * 0.28 + Math.sin(x * 0.007 - t * 0.17) * 2.1);
+  const c = 1 - Math.min(1, Math.abs(a) * 1.3);
+  return 0.03 + 0.17 * c * c * c;
+}
+function rasterVortices() {
+  omega.fill(0);
+  for (const q of vortices) {
+    const peak = q.G / (Math.PI * q.s2), R = 2.6 * Math.sqrt(q.s2);
+    const c0 = Math.max(0, Math.floor((q.x - R) / cw)), c1 = Math.min(cols - 1, Math.ceil((q.x + R) / cw));
+    const r0 = Math.max(0, Math.floor((q.y - R) / ch)), r1 = Math.min(rows - 1, Math.ceil((q.y + R) / ch));
+    for (let r = r0; r <= r1; r++) {
+      const dy = (r + 0.5) * ch - q.y;
+      for (let c = c0; c <= c1; c++) {
+        const dx = (c + 0.5) * cw - q.x;
+        omega[r * cols + c] += peak * Math.exp(-(dx * dx + dy * dy) / q.s2);
+      }
+    }
+  }
+}
+function rasterRipples(dt) {
+  ripA.fill(0);
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    const p = ripples[i]; p.age += dt;
+    if (p.age > 1.9) { ripples.splice(i, 1); continue; }
+    const amp = p.amp * Math.exp(-p.age * 1.4) * (1 - p.age / 1.9);
+    for (const [R, a] of [[p.age * 240, amp], [p.age * 150, amp * 0.5]]) {
+      const w = ch * 1.1, ext = R + w;
+      const c0 = Math.max(0, Math.floor((p.x - ext) / cw)), c1 = Math.min(cols - 1, Math.ceil((p.x + ext) / cw));
+      const r0 = Math.max(0, Math.floor((p.y - ext) / ch)), r1 = Math.min(rows - 1, Math.ceil((p.y + ext) / ch));
+      for (let r = r0; r <= r1; r++) {
+        const dy = (r + 0.5) * ch - p.y;
+        for (let c = c0; c <= c1; c++) {
+          const dx = (c + 0.5) * cw - p.x, e = Math.abs(Math.sqrt(dx * dx + dy * dy) - R);
+          if (e < w) ripA[r * cols + c] += a * (1 - e / w);
+        }
+      }
+    }
+  }
+}
+function rasterMask() {
+  maskG.fill(0);
+  for (const rr of maskRects) {
+    const c0 = Math.max(0, Math.floor((rr.left - 6) / cw)), c1 = Math.min(cols - 1, Math.floor((rr.right + 6) / cw));
+    const r0 = Math.max(0, Math.floor((rr.top - 2) / ch)), r1 = Math.min(rows - 1, Math.floor((rr.bottom + 2) / ch));
+    if (c1 < c0 || r1 < r0) continue;
+    for (let r = r0; r <= r1; r++) maskG.fill(1, r * cols + c0, r * cols + c1 + 1);
+  }
+}
+function put(idx, chr, layer) { gChar[idx] = chr.charCodeAt(0); gLayer[idx] = layer; }
+
+function rasterField() {
+  const nc0 = Math.ceil(bnRect.left / cw), nr0 = Math.round(bnRect.top / ch);
+  for (let r = 0; r < rows; r++) {
+    const y = (r + 0.5) * ch;
+    for (let c = 0; c < cols; c++) {
+      const idx = r * cols + c;
+      const x = (c + 0.5) * cw;
+      const s = omega[idx] / 14, as = Math.abs(s), Iw = 1 - Math.exp(-as * 0.8);
+      const a = ripA[idx];
+      const nx = c - nc0, ny = r - nr0;
+      const inName = NAME && nx >= 0 && ny >= 0 && nx < NAME.w && ny < NAME.h && NAME.m[ny * NAME.w + nx];
+      if (inName) {
+        const nI = Math.min(1, 2.2 * Iw + 1.2 * a);
+        put(idx, nI > 0.75 ? "@" : nI > 0.3 ? "%" : "#", nI > 0.3 ? L_INK : L_MUTED);
+        continue;
+      }
+      if (a > 0.14) { put(idx, ".:oO"[Math.min(3, (a * 4) | 0)], L_ACC); continue; }
+      // vorticity drawn as contour rings, the way a solver plots it; glyph family shows the spin sign
+      const amb = ambient(x, y, T);
+      if (as > 0.035) {
+        const ramp = s >= 0 ? POS : NEG;
+        if (as > 2.2) { put(idx, ramp[9], L_MUTED); continue; }
+        if (frac(Math.log2(as / 0.035) * 1.25) < 0.42) {
+          put(idx, rc(0.3 + 0.55 * Math.min(1, as / 2.2), ramp), as > 0.5 ? L_MUTED : L_FIELD);
+          continue;
+        }
+      }
+      put(idx, rc(amb), L_FIELD);
+    }
+  }
+}
+
+function patternMap(pat, t, cx, cy, R, toIdx) {
+  const map = new Map();
+  if (!pat.points) return null;
+  for (const [pu, pv, z, chOverride] of pat.points(t)) {
+    const idx = toIdx(cx + pu * R, cy + pv * R);
+    if (idx < 0) continue;
+    const prev = map.get(idx);
+    if (prev && prev.z >= z) continue;
+    map.set(idx, { z, c: chOverride || (z > 0.25 ? "@" : z > -0.15 ? "o" : ".") });
+  }
+  return map;
+}
+function rasterBlobs() {
+  blobs.forEach((b, i) => {
+    const pat = PAT[b.id], t = T + b.t0, R = b.R0 * b.scale, ext = R * 1.25;
+    const toIdx = (x, y) => {
+      const c = Math.floor(x / cw), r = Math.floor(y / ch);
+      return (c < 0 || r < 0 || c >= cols || r >= rows) ? -1 : r * cols + c;
+    };
+    const pmap = patternMap(pat, t, b.x, b.y, R, toIdx);
+    const du = cw / R, dv = ch / R;
+    const c0 = Math.max(0, Math.floor((b.x - ext) / cw)), c1 = Math.min(cols - 1, Math.ceil((b.x + ext) / cw));
+    const r0 = Math.max(0, Math.floor((b.y - ext) / ch)), r1 = Math.min(rows - 1, Math.ceil((b.y + ext) / ch));
+    for (let r = r0; r <= r1; r++) {
+      const dy = (r + 0.5) * ch - b.y;
+      for (let c = c0; c <= c1; c++) {
+        const dx = (c + 0.5) * cw - b.x, d = Math.hypot(dx, dy);
+        const Rt = blobRadius(b, Math.atan2(dy, dx));
+        if (d >= Rt) continue;
+        const idx = r * cols + c;
+        let chr;
+        if (pmap) { const e = pmap.get(idx); chr = e ? e.c : " "; }
+        else chr = pat(dx / R, dy / R, t, du, dv);
+        put(idx, chr, chr === " " ? L_NONE : L_INK);
+      }
+    }
+    b.poly = [];
+    for (let k = 0; k < 64; k++) { const th = k / 64 * Math.PI * 2, rr = blobRadius(b, th); b.poly.push(b.x + Math.cos(th) * rr, b.y + Math.sin(th) * rr); }
+  });
+  // labels last, so a neighbouring blob never clips them
+  blobs.forEach(b => {
+    const R = b.R0 * b.scale;
+    const label = `[ ${WORKS[b.id].label} ]`;
+    const lr = Math.floor((b.y + R * 1.12) / ch), lc = Math.round(b.x / cw - label.length / 2);
+    if (lr >= 0 && lr < rows) for (let k = 0; k < label.length; k++) {
+      const c = lc + k; if (c < 0 || c >= cols) continue;
+      put(lr * cols + c, label[k], label[k] === " " ? L_NONE : L_INK);
+    }
+  });
+}
+
+function draw() {
+  ctx.fillStyle = colors.bg;
+  ctx.fillRect(0, 0, W, H);
+  const yoff = (ch - fs) / 2;
+  blobs.forEach((b, i) => {
+    if (!b.poly) return;
+    ctx.beginPath();
+    for (let k = 0; k < b.poly.length; k += 2) k ? ctx.lineTo(b.poly[k], b.poly[k + 1]) : ctx.moveTo(b.poly[k], b.poly[k + 1]);
+    ctx.closePath();
+    ctx.fillStyle = colors.pool; ctx.fill();
+    if (hover === i || (hold && hold.blob === i)) { ctx.strokeStyle = colors.ink; ctx.lineWidth = 1; ctx.stroke(); }
+  });
+  const layerColor = [null, colors.field, colors.ink, colors.accent, colors.muted];
+  for (let L = 1; L <= 4; L++) {
+    ctx.fillStyle = layerColor[L];
+    const buf = rowBuf[L - 1];
+    for (let r = 0; r < rows; r++) {
+      let any = false;
+      const base = r * cols;
+      for (let c = 0; c < cols; c++) {
+        const idx = base + c;
+        if (gLayer[idx] === L && !maskG[idx]) { buf[c] = gChar[idx]; if (gChar[idx] !== 32) any = true; }
+        else buf[c] = 32;
+      }
+      if (any) ctx.fillText(String.fromCharCode.apply(null, buf), 0, r * ch + yoff);
+    }
+  }
+}
+
+function render(dt) {
+  rasterMask();
+  rasterVortices();
+  rasterRipples(dt);
+  rasterField();
+  rasterBlobs();
+  draw();
+}
+
+/* ---------- hold to open ---------- */
+const HOLD_MS = 650;
+function showHoldLabel(x, y, text) {
+  holdEl.hidden = false;
+  holdEl.textContent = text;
+  const w = holdEl.offsetWidth;
+  const left = Math.min(x + 16, innerWidth - w - 8);
+  holdEl.style.transform = `translate(${Math.max(8, left)}px, ${y + 18}px)`;
+}
+function updateHold(now) {
+  if (panelOpen) { holdEl.hidden = true; return; }
+  if (hold) {
+    const p = Math.min(1, (now - hold.start) / HOLD_MS), k = Math.round(p * 12);
+    showHoldLabel(mouse.tx, mouse.ty, "[" + "#".repeat(k) + ".".repeat(12 - k) + "]");
+    const b = blobs[hold.blob];
+    if (Math.hypot(mouse.tx - b.x, mouse.ty - b.y) > b.R0 * 1.5) { hold = null; return; }
+    if (p >= 1) {
+      const id = b.id;
+      addRipple(b.x, b.y, 1.4); openSound();
+      hold = null; holdEl.hidden = true;
+      openCase(id, null);
+    }
+    return;
+  }
+  if (hover >= 0 && mouseType === "mouse") showHoldLabel(mouse.tx, mouse.ty, "hold to open");
+  else holdEl.hidden = true;
+}
+
+/* ---------- readout ---------- */
+let lastReadout = 0;
+function updateReadout(now) {
+  if (now - lastReadout < 200) return;
+  lastReadout = now;
+  const b = mouse.has && Math.hypot(mouse.vx, mouse.vy) > 5 ? mouse : ghost;
+  const U = b.has ? Math.hypot(b.vx, b.vy) : 0;
+  readout.textContent = `St ${ST.toFixed(2)} · U ${Math.round(U)} px/s · D ${D} px · f = St·U/D = ${(ST * U / D).toFixed(1)} Hz · vortices ${vortices.length}`;
+}
+
+/* ---------- main loop ---------- */
+let last = performance.now(), running = false;
+function frame(now) {
+  const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
+  last = now; T += dt;
+  updateRects();
+  stepGhost(dt);
+  stepBody(ghost, dt);
+  stepBody(mouse, dt);
+  stepVortices(dt);
+  stepBlobs(dt);
+  hover = mouse.has && !panelOpen ? blobAt(mouse.tx, mouse.ty) : -1;
+  updateHold(now);
+  render(dt);
+  updateReadout(now);
+  if (!ghost.run && !panelOpen && now - lastMove > 14000 && vortices.length === 0) launchGhost();
+  if (running) requestAnimationFrame(frame);
+}
+function start() { if (running || reduce) return; running = true; last = performance.now(); requestAnimationFrame(frame); }
+function stop() { running = false; }
+
+function staticFrame() {
+  // Reduced motion: run one ghost pass off-screen in time, then draw a single still frame.
+  updateRects(); launchGhost();
+  for (let i = 0; i < 150 && ghost.run; i++) { T += 1 / 60; stepGhost(1 / 60); stepBody(ghost, 1 / 60); stepVortices(1 / 60); }
+  render(0);
+  updateReadout(1e9);
+}
+
+/* ---------- input ---------- */
+function interactive(el) { return el && el.closest && el.closest("a, button, input, .solid, .scrim"); }
+addEventListener("pointermove", e => {
+  mouseType = e.pointerType || "mouse";
+  if (e.pointerType !== "mouse" && e.buttons === 0) return;
+  if (!mouse.has) { mouse.x = mouse.tx = e.clientX; mouse.y = mouse.ty = e.clientY; mouse.has = true; }
+  mouse.tx = e.clientX; mouse.ty = e.clientY;
+  lastMove = performance.now();
+  if (ghost.run && mouseType === "mouse") ghost.run = false;
+}, { passive: true });
+document.addEventListener("pointerleave", () => { mouse.has = false; hover = -1; });
+addEventListener("pointerdown", e => {
+  if (panelOpen || interactive(e.target)) return;
+  mouseType = e.pointerType || "mouse";
+  mouse.x = mouse.tx = e.clientX; mouse.y = mouse.ty = e.clientY; mouse.has = true;
+  lastMove = performance.now();
+  const i = blobAt(e.clientX, e.clientY);
+  if (i >= 0) {
+    if (reduce) { openSound(); openCase(blobs[i].id, null); return; }
+    hold = { blob: i, start: performance.now() };
+  } else {
+    addRipple(e.clientX, e.clientY, 1); dropSound();
+  }
+});
+const endHold = e => {
+  if (hold) { hold = null; holdEl.hidden = true; }
+  if (e && e.pointerType && e.pointerType !== "mouse") mouse.has = false;
+};
+addEventListener("pointerup", endHold);
+addEventListener("pointercancel", endHold);
+canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+addEventListener("scroll", () => {
+  const dy = lastScroll - scrollY; lastScroll = scrollY;
+  for (const b of blobs) b.y += dy;
+  for (const q of vortices) q.y += dy;
+  for (const p of ripples) p.y += dy;
+  if (reduce) { updateRects(); render(0); }
+}, { passive: true });
+let rz = 0;
+addEventListener("resize", () => {
+  cancelAnimationFrame(rz);
+  rz = requestAnimationFrame(() => { resize(); if (reduce) render(0); });
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); else start(); });
+
+const soundBtn = $("#sound");
+function syncSound() {
+  soundBtn.textContent = soundOn ? "[sound on]" : "[sound off]";
+  soundBtn.setAttribute("aria-pressed", String(soundOn));
+}
+soundBtn.addEventListener("click", () => {
+  soundOn = !soundOn;
+  try { localStorage.setItem("pxr-sound", soundOn ? "on" : "off"); } catch (e) {}
+  syncSound();
+  if (soundOn) dropSound();
+});
+syncSound();
+
+/* ---------- panels ---------- */
+const scrim = $("#scrim"), panel = $("#panel"), pBody = $("#panel-body");
+let returnFocus = null, miniRun = false;
+function openPanel(kicker, title, node, from) {
+  $("#panel-kicker").textContent = kicker;
+  $("#panel-title").textContent = title;
+  pBody.replaceChildren(node);
+  returnFocus = from || document.activeElement;
+  scrim.hidden = false; panelOpen = true;
+  holdEl.hidden = true;
+  panel.scrollTop = 0;
+  panel.focus();
+}
+function closePanel() {
+  if (!panelOpen) return;
+  scrim.hidden = true; panelOpen = false; miniRun = false;
+  const v = pBody.querySelector("video"); if (v) v.pause();
+  if (returnFocus && returnFocus.focus) returnFocus.focus();
+}
+function openCase(id, from) {
+  const w = WORKS[id];
+  const wrap = document.createElement("div");
+  const fig = document.createElement("figure"); fig.className = "clip";
+  if (w.video) {
+    const v = document.createElement("video");
+    Object.assign(v, { src: w.video, muted: true, loop: true, autoplay: true, playsInline: true });
+    v.setAttribute("aria-label", w.title + " simulation");
+    fig.append(v);
+  } else {
+    const cv = document.createElement("canvas"); cv.className = "mini"; cv.setAttribute("aria-hidden", "true");
+    fig.append(cv);
+  }
+  const p = document.createElement("p"); p.textContent = w.text;
+  const dl = document.createElement("dl"); dl.className = "meta";
+  for (const [k, val] of [["field", w.field], ["tools", w.tools]]) {
+    const dt = document.createElement("dt"); dt.textContent = k;
+    const dd = document.createElement("dd"); dd.textContent = val;
+    dl.append(dt, dd);
+  }
+  wrap.append(fig, p, dl);
+  openPanel("selected works", w.title, wrap, from);
+  const cv = fig.querySelector("canvas");
+  if (cv) startMini(cv, id);
+}
+function startMini(cv, id) {
+  const c2 = cv.getContext("2d", { alpha: false });
+  const pat = PAT[id];
+  miniRun = true;
+  let t = 0, prev = performance.now();
+  const loop = now => {
+    if (!miniRun) return;
+    const dt = Math.min(0.05, (now - prev) / 1000); prev = now; t += dt;
+    const Wd = cv.clientWidth, Hd = cv.clientHeight;
+    if (!Wd || !Hd) { requestAnimationFrame(loop); return; }
+    const pr = Math.min(window.devicePixelRatio || 1, 2);
+    if (cv.width !== Math.round(Wd * pr)) { cv.width = Math.round(Wd * pr); cv.height = Math.round(Hd * pr); }
+    c2.setTransform(pr, 0, 0, pr, 0, 0);
+    const mfs = Math.max(10, Math.min(13, Wd / 62));
+    c2.font = `${mfs}px ${FONT}`; c2.textBaseline = "top";
+    const mcw = c2.measureText("MMMMMMMMMM").width / 10, mch = Math.round(mfs * 1.2);
+    const mc = Math.floor(Wd / mcw), mr = Math.floor(Hd / mch);
+    const R = Hd * 0.46, cx = Wd / 2, cy = Hd / 2;
+    c2.fillStyle = colors.bg; c2.fillRect(0, 0, Wd, Hd);
+    c2.fillStyle = colors.ink;
+    let pmap = null;
+    if (pat.points) {
+      pmap = new Map();
+      for (const [pu, pv, z, co] of pat.points(t)) {
+        const c = Math.floor((cx + pu * R) / mcw), r = Math.floor((cy + pv * R) / mch);
+        if (c < 0 || r < 0 || c >= mc || r >= mr) continue;
+        const k = r * mc + c, e = pmap.get(k);
+        if (e && e.z >= z) continue;
+        pmap.set(k, { z, c: co || (z > 0.25 ? "@" : z > -0.15 ? "o" : ".") });
+      }
+    }
+    const du = mcw / R, dv = mch / R;
+    for (let r = 0; r < mr; r++) {
+      let s = "";
+      for (let c = 0; c < mc; c++) {
+        if (pmap) { const e = pmap.get(r * mc + c); s += e ? e.c : " "; }
+        else s += pat(((c + 0.5) * mcw - cx) / R, ((r + 0.5) * mch - cy) / R, t, du, dv);
+      }
+      c2.fillText(s, 0, r * mch + (mch - mfs) / 2);
+    }
+    if (!reduce) requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+function openTemplate(kind, from) {
+  const node = $("#tpl-" + kind).content.cloneNode(true);
+  openPanel(kind === "cv" ? "curriculum vitae" : "get in touch", kind === "cv" ? "Pedro Xavier Ramos, PhD" : "Contact", node, from);
+  if (kind === "contact") {
+    const btn = $("#copy", pBody), em = $("#email", pBody);
+    btn.addEventListener("click", () => {
+      const sel = () => { const r = document.createRange(); r.selectNodeContents(em); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+      try {
+        navigator.clipboard.writeText(em.textContent).then(() => { btn.textContent = "[copied]"; }, () => { sel(); btn.textContent = "[selected]"; });
+      } catch (e) { sel(); btn.textContent = "[selected]"; }
+    });
+  }
+}
+document.querySelectorAll("[data-work]").forEach(b => b.addEventListener("click", () => { openSound(); openCase(b.dataset.work, b); }));
+document.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => openTemplate(b.dataset.open, b)));
+$("#close").addEventListener("click", closePanel);
+scrim.addEventListener("pointerdown", e => { if (e.target === scrim) closePanel(); });
+addEventListener("keydown", e => {
+  if (e.key === "Escape") closePanel();
+  if (e.key === "Tab" && panelOpen) {
+    const f = [...panel.querySelectorAll("a, button")];
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  }
+});
+
+/* ---------- theme ---------- */
+readColors();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { readColors(); if (reduce) render(0); });
+new MutationObserver(() => { readColors(); if (reduce) render(0); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+/* ---------- boot ---------- */
+function boot() {
+  resize();
+  if (reduce) { staticFrame(); return; }
+  setTimeout(launchGhost, 500);
+  start();
+}
+let booted = false;
+const go = () => { if (booted) return; booted = true; boot(); };
+if (document.fonts && document.fonts.load) {
+  Promise.race([document.fonts.load(`14px "IBM Plex Mono"`), new Promise(r => setTimeout(r, 900))]).then(go, go);
+  document.fonts.addEventListener && document.fonts.addEventListener("loadingdone", () => { if (booted) resize(); });
+} else go();
+})();
+</script>
+</body>
+</html>
