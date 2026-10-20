@@ -255,9 +255,6 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 
 <template id="tpl-contact">
   <div>
-    <h3 class="label">email</h3>
-    <p class="email-row"><code id="email">pedro.xavier.ramos@gmail.com</code><button type="button" class="copy" id="copy">[copy]</button></p>
-    <p><a href="mailto:pedro.xavier.ramos@gmail.com">write an email</a></p>
     <h3 class="label">publications</h3>
     <p><a href="https://scholar.google.com/citations?user=rQWce5UAAAAJ&amp;hl=en" target="_blank" rel="noopener">Google Scholar</a></p>
     <h3 class="label">based in</h3>
@@ -1124,7 +1121,7 @@ function openTemplate(kind, from) {
   openPanel(kind === "cv" ? "curriculum vitae" : "get in touch", kind === "cv" ? "Pedro Xavier Ramos, PhD" : "Contact", node, from);
   if (kind === "contact") {
     const btn = $("#copy", pBody), em = $("#email", pBody);
-    btn.addEventListener("click", () => {
+    if (btn && em) btn.addEventListener("click", () => {
       const sel = () => { const r = document.createRange(); r.selectNodeContents(em); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
       try {
         navigator.clipboard.writeText(em.textContent).then(() => { btn.textContent = "[copied]"; }, () => { sel(); btn.textContent = "[selected]"; });
